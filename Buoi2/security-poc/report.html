@@ -1,0 +1,305 @@
+<title>Rà soát bảo mật Buổi 2</title>
+<style>
+/* Layout: cột đơn, mỗi lỗi là một khối code↔bằng chứng; palette kỹ thuật xanh mực + hổ phách */
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --surface-2:#eef0f4; --fg:#1a1f2b; --muted:#5c6472;
+  --line:#dce0e8; --accent:#2f6df6; --code-bg:#f7f8fa; --code-fg:#1a1f2b;
+  --hl:#fff3cd; --hl-line:#f1c40f;
+  --crit:#d13438; --crit-bg:#fbe5e6; --high:#e8730c; --high-bg:#fcecdd;
+  --med:#b8860b; --med-bg:#fbf3d9; --info:#2f6df6; --info-bg:#e5edfd;
+  --ok:#1a7f4b; --ok-bg:#e2f3e9; --bad:#d13438;
+  --mono:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --surface:#1a1e27; --surface-2:#20252f; --fg:#e6e9ef; --muted:#9aa3b2;
+  --line:#2c3341; --accent:#5b8cff; --code-bg:#0f1219; --code-fg:#d7dce6;
+  --hl:#3a3320; --hl-line:#c9a227;
+  --crit:#ff6b6f; --crit-bg:#38181a; --high:#ff9d4d; --high-bg:#37241239; --high-bg:#33220f;
+  --med:#e6c04b; --med-bg:#2e2810; --info:#5b8cff; --info-bg:#182335;
+  --ok:#4cd08a; --ok-bg:#123024; --bad:#ff6b6f; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --surface:#1a1e27; --surface-2:#20252f; --fg:#e6e9ef; --muted:#9aa3b2;
+  --line:#2c3341; --accent:#5b8cff; --code-bg:#0f1219; --code-fg:#d7dce6;
+  --hl:#3a3320; --hl-line:#c9a227;
+  --crit:#ff6b6f; --crit-bg:#38181a; --high:#ff9d4d; --high-bg:#33220f;
+  --med:#e6c04b; --med-bg:#2e2810; --info:#5b8cff; --info-bg:#182335;
+  --ok:#4cd08a; --ok-bg:#123024; --bad:#ff6b6f; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding-inline:16px;padding-block:32px}
+header.top{border-bottom:2px solid var(--line);padding-bottom:20px;margin-bottom:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 6px}
+h1{font-size:clamp(26px,5vw,38px);line-height:1.1;margin:0 0 10px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);margin:0;max-width:60ch;font-size:15px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-family:var(--mono);
+  font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:600}
+
+.counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:28px 0}
+.count{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.count .n{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.count .l{font-size:12.5px;color:var(--muted);margin-top:4px}
+.count.c-crit{border-left:4px solid var(--crit)} .count.c-crit .n{color:var(--crit)}
+.count.c-high{border-left:4px solid var(--high)} .count.c-high .n{color:var(--high)}
+.count.c-med{border-left:4px solid var(--med)}  .count.c-med .n{color:var(--med)}
+.count.c-info{border-left:4px solid var(--info)} .count.c-info .n{color:var(--info)}
+
+section.finding{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:20px;margin-bottom:22px;overflow:hidden}
+.fhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:4px}
+.fid{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.fhead h2{font-size:19px;margin:0;flex:1;min-width:0;letter-spacing:-.01em}
+.badge{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.b-crit{background:var(--crit-bg);color:var(--crit)}
+.b-high{background:var(--high-bg);color:var(--high)}
+.b-med{background:var(--med-bg);color:var(--med)}
+.b-info{background:var(--info-bg);color:var(--info)}
+.floc{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin:2px 0 14px}
+.floc .cwe{color:var(--accent)}
+
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:16px 0 6px;display:flex;align-items:center;gap:7px}
+.lbl::before{content:"";width:14px;height:2px;background:var(--accent);display:inline-block}
+p.exp{margin:6px 0 0;font-size:14.5px}
+
+.code{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;
+  overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7}
+.code pre{margin:0;padding:12px 0}
+.code .ln{display:block;padding:0 16px;white-space:pre;color:var(--code-fg)}
+.code .ln .g{color:var(--muted)}
+.code .hl{background:var(--hl);box-shadow:inset 3px 0 0 var(--hl-line)}
+.tag{font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:5px;font-weight:600;
+  vertical-align:middle;margin-left:8px}
+.tag-bad{background:var(--crit-bg);color:var(--crit)}
+
+.term{background:#0f1219;border:1px solid var(--line);border-radius:8px;overflow-x:auto;
+  font-family:var(--mono);font-size:12.5px;line-height:1.65;color:#d7dce6}
+.term pre{margin:0;padding:12px 16px;white-space:pre}
+.term .cmd{color:#7fd4ff}
+.term .ok{color:#4cd08a} .term .bad{color:#ff7a7d} .term .dim{color:#7b8494}
+.term .hl{color:#ffd257;font-weight:600}
+
+.fix{background:var(--ok-bg);border:1px solid color-mix(in srgb,var(--ok) 30%,transparent);
+  border-radius:8px;padding:12px 14px;margin-top:14px}
+.fix .lbl{margin-top:0;color:var(--ok)}.fix .lbl::before{background:var(--ok)}
+.fix code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);
+  padding:1px 5px;border-radius:4px}
+.impact{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;
+  margin-top:12px;color:var(--crit)}
+.impact.mit{color:var(--info)}
+.impact svg{flex:none}
+
+footer{border-top:1px solid var(--line);margin-top:10px;padding-top:16px;
+  font-size:12.5px;color:var(--muted)}
+footer .note{background:var(--info-bg);border-radius:8px;padding:12px 14px;margin-bottom:12px;
+  color:var(--fg)}
+.disc{font-style:normal}
+a{color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Thực hành LTANTT · Buổi 2 · Rà soát mã nguồn</p>
+    <h1>Điểm yếu bảo mật trong crypto-toolkit &amp; mini-ca</h1>
+    <p class="lede">Phân tích tĩnh kết hợp chứng minh khai thác (PoC) chạy thật trên máy cục bộ.
+      Mỗi lỗi đối chiếu đoạn code gốc với bằng chứng thực thi.</p>
+    <div class="meta">
+      <span><b>Phạm vi:</b> Buoi2/crypto-toolkit, Buoi2/mini-ca</span>
+      <span><b>Môi trường:</b> Windows 11 · Python 3.13 · Flask 3.1.3 / Werkzeug 3.1.9</span>
+      <span><b>Ngày:</b> 30/09/2026</span>
+    </div>
+  </header>
+
+  <div class="counts">
+    <div class="count c-crit"><div class="n">3</div><div class="l">Nghiêm trọng — đã khai thác</div></div>
+    <div class="count c-high"><div class="n">1</div><div class="l">Cao — đã khai thác</div></div>
+    <div class="count c-info"><div class="n">1</div><div class="l">Tiềm ẩn — framework chặn</div></div>
+    <div class="count c-med"><div class="n">5</div><div class="l">Tổng số phát hiện</div></div>
+  </div>
+
+  <!-- F1 -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fid">PoC&nbsp;2</span>
+      <h2>common_name ghi đè khóa CA</h2>
+      <span class="badge b-crit">Nghiêm trọng</span>
+    </div>
+    <div class="floc">mini-ca/ca_utils.py:109 · <span class="cwe">CWE-73 External Control of File Name</span></div>
+
+    <div class="lbl">Đoạn code lỗi</div>
+    <div class="code"><pre><span class="ln"><span class="g">108 </span>    <span class="g"># tên file lấy trực tiếp từ common_name, chỉ thay dấu cách</span></span><span class="ln hl"><span class="g">109 </span>    filename_prefix = subject_info.get("common_name", "entity").replace(" ", "_")</span><span class="ln hl"><span class="g">110 </span>    save_key(key, f"{filename_prefix}_key.pem")<span class="tag tag-bad">không lọc ../ hay tên trùng</span></span><span class="ln"><span class="g">111 </span>    save_cert(cert, f"{filename_prefix}_cert.pem")</span></pre></div>
+
+    <div class="lbl">Cách khai thác</div>
+    <p class="exp">Phát hành chứng chỉ end-entity với <code>common_name = "root_ca"</code>. Tên file
+      đầu ra thành <code>root_ca_key.pem</code>, trùng đúng file khóa Root CA và ghi đè lên nó.
+      Chỉ cần quyền phát hành cert thường là phá được khóa gốc của toàn hệ thống.</p>
+
+    <div class="lbl">Bằng chứng chạy thật</div>
+    <div class="term"><pre><span class="cmd">&gt; python poc_ca.py</span>
+<span class="dim">====== PoC 2 - common_name ghi de khoa Root CA ======</span>
+Khoa Root truoc/sau co giong nhau khong? <span class="bad">False</span>
+&gt;&gt;&gt; KET QUA: <span class="bad">BI GHI DE (khoa Root da bi thay!)</span></pre></div>
+
+    <div class="impact"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 14h14L8 1zm0 4v5M8 12v.5"/></svg>
+      Ghi đè khóa Root/Intermediate CA → sụp đổ toàn bộ chuỗi tin cậy</div>
+
+    <div class="fix">
+      <div class="lbl">Cách sửa</div>
+      <p class="exp" style="margin-top:2px">Dùng <code>werkzeug.utils.secure_filename</code> hoặc đặt
+        tên theo serial: <code>f"{cert.serial_number:x}_cert.pem"</code>. Cấm phát hành với
+        common_name trùng tên file dành riêng cho CA.</p>
+    </div>
+  </section>
+
+  <!-- F2 -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fid">PoC&nbsp;3</span>
+      <h2>Xác thực chuỗi không có mỏ neo tin cậy</h2>
+      <span class="badge b-crit">Nghiêm trọng</span>
+    </div>
+    <div class="floc">mini-ca/ca_utils.py:115 · <span class="cwe">CWE-295 Improper Certificate Validation</span></div>
+
+    <div class="lbl">Đoạn code lỗi</div>
+    <div class="code"><pre><span class="ln"><span class="g">115 </span>def verify_certificate_chain(cert_to_verify, chain):</span><span class="ln"><span class="g">116 </span>    try:</span><span class="ln hl"><span class="g">117 </span>        for issuer_cert in chain:          <span class="g"># tin mọi chuỗi được truyền vào</span></span><span class="ln"><span class="g">118 </span>            issuer_public_key = issuer_cert.public_key()</span><span class="ln"><span class="g">119 </span>            issuer_public_key.verify(...)  <span class="g"># chỉ kiểm chữ ký</span></span><span class="ln"><span class="g">120 </span>            cert_to_verify = issuer_cert</span><span class="ln hl"><span class="g">126 </span>        return True   <span class="g"># không kiểm root có đáng tin, hạn, thu hồi</span></span></pre></div>
+
+    <div class="lbl">Cách khai thác</div>
+    <p class="exp">Hàm chỉ kiểm tra "cert sau ký cert trước", mà chuỗi lại do người gọi cung cấp.
+      Kẻ tấn công tạo Root CA riêng, tự cấp cert cho <code>bank.example.com</code>, rồi nộp
+      kèm chuỗi của chính họ. Không có danh sách Root tin cậy cố định để đối chiếu.</p>
+
+    <div class="lbl">Bằng chứng chạy thật</div>
+    <div class="term"><pre><span class="dim">====== PoC 3 - Chuoi tin cay gia mao ======</span>
+verify_certificate_chain(<span class="dim">cert gia, chuoi cua ke tan cong</span>) = <span class="bad">True</span>
+&gt;&gt;&gt; KET QUA: <span class="bad">QUA MAT (chap nhan cert gia mao!)</span></pre></div>
+
+    <div class="impact"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 14h14L8 1z"/></svg>
+      Chấp nhận chứng chỉ giả mạo bất kỳ → mạo danh, MITM</div>
+
+    <div class="fix">
+      <div class="lbl">Cách sửa</div>
+      <p class="exp" style="margin-top:2px">Neo vào một Root CA tin cậy nạp sẵn và dùng API chuẩn
+        <code>x509.verification.PolicyBuilder().store(Store([trusted_root]))</code>, tự kiểm hạn,
+        BasicConstraints và trạng thái thu hồi.</p>
+    </div>
+  </section>
+
+  <!-- F3 -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fid">PoC&nbsp;4</span>
+      <h2>CRL không kiểm tra chữ ký</h2>
+      <span class="badge b-crit">Nghiêm trọng</span>
+    </div>
+    <div class="floc">mini-ca/revoke_utils.py:69 · <span class="cwe">CWE-347 Improper Verification of Signature</span></div>
+
+    <div class="lbl">Đoạn code lỗi</div>
+    <div class="code"><pre><span class="ln"><span class="g">67 </span>def check_revocation_status(cert_file: str):</span><span class="ln"><span class="g">68 </span>    cert = load_cert(cert_file)</span><span class="ln hl"><span class="g">69 </span>    with open(CRL_FILE, "rb") as f:</span><span class="ln hl"><span class="g">70 </span>        crl = x509.load_pem_x509_crl(f.read())  <span class="g"># không verify chữ ký CRL</span></span><span class="ln"><span class="g">71 </span>    for revoked in crl:                         <span class="g"># cũng không xem next_update</span></span><span class="ln"><span class="g">72 </span>        if revoked.serial_number == cert.serial_number:</span><span class="ln"><span class="g">73 </span>            return True</span></pre></div>
+
+    <div class="lbl">Cách khai thác</div>
+    <p class="exp">Thu hồi một chứng chỉ, sau đó thay <code>ca_crl.pem</code> bằng một CRL rỗng ký bằng
+      khóa bất kỳ. Hàm kiểm tra không xác minh CRL có đúng do CA phát hành, nên "gỡ thu hồi"
+      thành công — cert bị thu hồi lại được báo hợp lệ.</p>
+
+    <div class="lbl">Bằng chứng chạy thật</div>
+    <div class="term"><pre><span class="dim">====== PoC 4 - 'Go thu hoi' bang cach thay CRL ======</span>
+Sau khi thu hoi:          revoked = <span class="ok">True</span>
+Sau khi thay CRL gia:     revoked = <span class="bad">False</span>
+&gt;&gt;&gt; <span class="bad">chung chi da thu hoi gio lai bao 'Hop le'</span></pre></div>
+
+    <div class="impact"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 14h14L8 1z"/></svg>
+      Vô hiệu hóa cơ chế thu hồi → cert bị lộ vẫn được tin</div>
+
+    <div class="fix">
+      <div class="lbl">Cách sửa</div>
+      <p class="exp" style="margin-top:2px">Trước khi dùng: <code>crl.is_signature_valid(issuer_cert.public_key())</code>
+        và kiểm <code>crl.next_update_utc</code> còn hiệu lực. Từ chối CRL không hợp lệ thay vì bỏ qua.</p>
+    </div>
+  </section>
+
+  <!-- F4 -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fid">PoC&nbsp;5</span>
+      <h2>Lộ khóa &amp; giải mã bỏ qua salt</h2>
+      <span class="badge b-high">Cao</span>
+    </div>
+    <div class="floc">crypto-toolkit/securecrypto/aes_utils.py:27, 32 · <span class="cwe">CWE-522 / CWE-320 Key Management</span></div>
+
+    <div class="lbl">Đoạn code lỗi</div>
+    <div class="code"><pre><span class="ln"><span class="g">27 </span>    return base64.b64encode(key).decode()   <span class="g"># TRẢ key ra ngoài</span><span class="tag tag-bad">lộ bí mật</span></span><span class="ln"><span class="g">   </span></span><span class="ln"><span class="g">29 </span>def decrypt_file_aes(encrypted_file, key_base64):</span><span class="ln"><span class="g">31 </span>    raw = f.read()</span><span class="ln hl"><span class="g">32 </span>    salt = raw[:16]      <span class="g"># đọc salt rồi... không bao giờ dùng</span></span><span class="ln"><span class="g">35 </span>    key = base64.b64decode(key_base64)      <span class="g"># nhận thẳng KEY, không phải mật khẩu</span></span></pre></div>
+
+    <div class="lbl">Cách khai thác</div>
+    <p class="exp">App in key ra CLI, trả trong JSON API và hiện trên GUI. Ai nhặt được chuỗi key
+      (từ log, response, clipboard) là giải mã được mà không cần mật khẩu. Ngược lại, đưa đúng
+      mật khẩu vào hàm decrypt thì thất bại vì hàm đòi key — salt đọc lên nhưng bị bỏ.</p>
+
+    <div class="lbl">Bằng chứng chạy thật</div>
+    <div class="term"><pre><span class="cmd">&gt; python poc_aes.py</span>
+[+] App IN RA key: <span class="hl">EQP80/1i2ZdELKLTD+pPfdeE1GU...</span>
+<span class="dim">-- LOI A: chi can KEY (mat khau bo trong) --</span>
+Ke tan cong doc duoc: <span class="bad">Thong tin bi mat - HUTECH</span>
+<span class="dim">-- LOI B: dua MAT KHAU vao decrypt --</span>
+&gt;&gt;&gt; That bai: <span class="bad">Error</span>  <span class="dim">(ham doi KEY, khong phai mat khau)</span></pre></div>
+
+    <div class="impact"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 14h14L8 1z"/></svg>
+      Lộ key = mất toàn bộ bảo mật; tham số --password khi giải mã gây hiểu nhầm</div>
+
+    <div class="fix">
+      <div class="lbl">Cách sửa</div>
+      <p class="exp" style="margin-top:2px">Hàm giải mã nhận <b>mật khẩu</b>, đọc salt từ file rồi
+        <code>derive_key_from_password</code> lại để tạo key. Không bao giờ trả hay in key ra ngoài.</p>
+    </div>
+  </section>
+
+  <!-- F5 -->
+  <section class="finding">
+    <div class="fhead">
+      <span class="fid">PoC&nbsp;1</span>
+      <h2>Path traversal khi upload</h2>
+      <span class="badge b-info">Tiềm ẩn</span>
+    </div>
+    <div class="floc">crypto-toolkit/securecrypto/api.py:15 · <span class="cwe">CWE-22 Path Traversal</span></div>
+
+    <div class="lbl">Đoạn code lỗi</div>
+    <div class="code"><pre><span class="ln"><span class="g">13 </span>    f = request.files['file']</span><span class="ln hl"><span class="g">15 </span>    save_path = os.path.join(FILES_DIR, f.filename)  <span class="g"># dùng thẳng tên client gửi</span></span><span class="ln"><span class="g">16 </span>    f.save(save_path)</span></pre></div>
+
+    <div class="lbl">Kết quả kiểm chứng</div>
+    <p class="exp">Đã gửi payload thật với <code>filename=..\..\poc.txt</code> và <code>../../poc.txt</code>.
+      File luôn bị giữ trong <code>upload/</code> (tên bị rút còn <code>poc.txt</code> hoặc
+      <code>....poc.txt</code>). <b>Werkzeug 3.1.9 tự lược bỏ dấu phân cách thư mục</b>, nên
+      không thoát ra ngoài được.</p>
+
+    <div class="lbl">Bằng chứng chạy thật</div>
+    <div class="term"><pre><span class="cmd">&gt; curl -F "file=@poc.txt;filename=..\..\poc.txt" ...</span>
+{"key":"kf6l+OtsR/kw..."}
+<span class="dim"># Tim file thoat ra ngoai upload/:</span>
+<span class="dim">-- upload/ --</span>  ....poc.txt   <span class="dim">(vẫn nằm trong upload)</span>
+<span class="dim">-- crypto-toolkit/ --</span>  <span class="ok">(rỗng — không thoát ra)</span></pre></div>
+
+    <div class="impact mit"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-1 10L4 8l1-1 2 2 4-4 1 1-5 5z"/></svg>
+      Không khai thác được trên phiên bản hiện tại — framework đã giảm nhẹ</div>
+
+    <div class="fix">
+      <div class="lbl">Vẫn nên sửa (phòng thủ theo chiều sâu)</div>
+      <p class="exp" style="margin-top:2px">Không phụ thuộc framework: gọi
+        <code>secure_filename(f.filename)</code> và kiểm tra <code>os.path.commonpath</code>
+        chắc chắn nằm trong <code>FILES_DIR</code>. Đổi/hạ phiên bản Werkzeug có thể mở lại lỗ hổng.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="note"><b>Ghi chú trung thực:</b> PoC 2, 3, 4, 5 đã chứng minh khai thác được bằng
+      script chạy thật. PoC 1 là lỗi tiềm ẩn hiện đang được Werkzeug 3.1.9 chặn, không phải
+      lỗ hổng khai thác thành công — cần mô tả đúng như vậy trong báo cáo.</div>
+    <p class="disc">Script tái hiện: <code>Buoi2/security-poc/poc_ca.py</code> và
+      <code>poc_aes.py</code>. Cả hai chạy trong thư mục tạm, không tác động tới
+      <code>certs/</code> thật. Rà soát phục vụ mục đích học tập trên mã nguồn của chính người thực hiện.</p>
+  </footer>
+</div>
