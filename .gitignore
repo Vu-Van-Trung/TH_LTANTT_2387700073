@@ -16,3 +16,9 @@ secure.log.*
 .idea/
 .DS_Store
 Thumbs.db
+
+# Lab3 secrets
+certs/
+*.key
+*.pem
+.env
