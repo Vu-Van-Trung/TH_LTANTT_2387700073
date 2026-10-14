@@ -1,5 +1,6 @@
 # Python
 __pycache__/
+.pytest_cache/
 *.py[cod]
 *.egg-info/
 .venv/
@@ -22,3 +23,6 @@ certs/
 *.key
 *.pem
 .env
+
+# JWT token sinh ra khi chay main.py
+token.txt
