@@ -1,0 +1,4 @@
+test-job:
+  script:
+    - echo "This is my first job!"
+    - date
